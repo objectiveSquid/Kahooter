@@ -24,6 +24,7 @@ class BotManager:
         bot_count: int,
         headless: bool = False,
         do_not_optimize: bool = False,
+        re_download: bool = False,
     ) -> None:
         self.logger = logger
         self.bot_count = bot_count
@@ -32,10 +33,10 @@ class BotManager:
         self.do_not_optimize = do_not_optimize
 
         try:
-            if not should_download_chromedriver(".chromedriver"):
+            if should_download_chromedriver(".chromedriver") or re_download:
                 self.logger.info("Downloading chromedriver.")
             self.chrome_version, self.chromedriver_path = install_chromedriver(
-                ".chromedriver"
+                ".chromedriver", re_download
             )
         except Exception as error:
             self.logger.critical(f"Failed to download chromedriver: {error}")

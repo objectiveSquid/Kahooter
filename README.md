@@ -18,5 +18,6 @@ A bot to join Kahoot lobbies and vote randomly.
 - `-h`, `--headless` is an optional flag to run the bots headless (no window appears)
 - `-v`, `--verbose` is an optional flag to print debug messages
 - `-no`, `--no-optimization` is an optional flag to disable optimization
+- `-rd`, `--re-download` is an optional flag to re-download chromedriver
 
 Example: `python -m kahooter 4402901 5 --headless`

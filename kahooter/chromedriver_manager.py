@@ -128,7 +128,7 @@ def should_download(directory: str, version: str | None = None) -> bool:
     )
 
 
-def install(directory: str) -> tuple[str, str]:
+def install(directory: str, re_download: bool) -> tuple[str, str]:
     version = get_chrome_version()
     chromedriver_link = get_chromedriver_link(version)
     if chromedriver_link == None:
@@ -141,7 +141,7 @@ def install(directory: str) -> tuple[str, str]:
     after_unzip_executable_path = os.path.join(directory, relative_zip_executable_path)
     executable_path = os.path.join(directory, adapt_executable_name(version))
 
-    if not should_download(directory, version):
+    if not should_download(directory, version) and not re_download:
         return version, executable_path
 
     os.makedirs(directory, exist_ok=True)

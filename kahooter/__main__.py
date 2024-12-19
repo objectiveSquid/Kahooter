@@ -11,7 +11,7 @@ def main() -> None:
     parser.add_argument(
         "lobby_id",
         type=int,
-        help="Lobby ID",
+        help="Kahoot lobby ID",
     )
     parser.add_argument(
         "bot_count",
@@ -39,6 +39,12 @@ def main() -> None:
         action="store_true",
         help="Do not optimize the running chrome by disabling unused features",
     )
+    parser.add_argument(
+        "-rd",
+        "--re-download",
+        action="store_true",
+        help="Re-download chromedriver even if it's already downloaded",
+    )
 
     args = parser.parse_args()
 
@@ -56,6 +62,8 @@ def main() -> None:
         args.lobby_id,
         args.bot_count,
         args.headless,
+        args.no_optimize,
+        args.re_download,
     )
     manager.run()
 
