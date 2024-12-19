@@ -13,7 +13,7 @@ import re
 
 
 # adapted from https://pypi.org/project/knw-Chromedriver-manager
-def get_chrome_version() -> str | None:
+def get_chrome_version() -> str:
     version = None
 
     if os.name == "nt":  # windows
@@ -24,8 +24,6 @@ def get_chrome_version() -> str | None:
             cmd, shell=True, stderr=subprocess.STDOUT
         ).decode()
         version = re.search(r"(\d+\.\d+\.\d+\.\d+)", output).group(0)
-
-        return version
     else:  # unix
         paths = [
             "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
@@ -55,7 +53,9 @@ def get_chrome_version() -> str | None:
 
             break
 
-        return version
+    if version == None:
+        raise Exception("Chrome is not installed.")
+    return version
 
 
 def create_portable_chrome_directory() -> tuple[str, bool]:
@@ -66,7 +66,7 @@ def create_portable_chrome_directory() -> tuple[str, bool]:
 
 
 @cachetools.cached({})
-def get_chromedriver_link(version: str) -> str | None:
+def get_chromedriver_link(version: str) -> str:
     version_without_patch = ".".join(version.split(".")[:-1])
 
     try:
@@ -77,7 +77,9 @@ def get_chromedriver_link(version: str) -> str | None:
             if item["platform"] == get_platform():
                 return item["url"]
     except (requests.RequestException, KeyError):
-        return
+        pass
+
+    raise Exception("Unable to get chromedriver link.")
 
 
 def get_platform() -> Literal["win32", "win64", "mac-arm64", "mac-x64", "linux64"]:
@@ -103,15 +105,13 @@ def get_platform() -> Literal["win32", "win64", "mac-arm64", "mac-x64", "linux64
 
 def get_chromedriver_size(version: str) -> int:
     chromedriver_link = get_chromedriver_link(version)
-    if chromedriver_link == None:
-        raise Exception("Unable to get chromedriver link.")
 
     return int(requests.head(chromedriver_link).headers["Content-Length"])
 
 
 def adapt_executable_name(name: str) -> str:
     if os.name == "nt":
-        return name + ".exe"
+        return f"{name}.exe"
     return name
 
 
@@ -119,10 +119,17 @@ def get_executable_path(directory: str, version: str) -> str:
     return os.path.join(directory, adapt_executable_name(version))
 
 
+def should_download(directory: str, version: str | None = None) -> bool:
+    if version == None:
+        version = get_chrome_version()
+
+    return get_chromedriver_size(version) != os.path.getsize(
+        get_executable_path(directory, version)
+    )
+
+
 def install(directory: str) -> tuple[str, str]:
     version = get_chrome_version()
-    if version == None:
-        raise Exception("Unable to get Chrome version.")
     chromedriver_link = get_chromedriver_link(version)
     if chromedriver_link == None:
         raise Exception("Unable to get chromedriver link.")
@@ -133,6 +140,9 @@ def install(directory: str) -> tuple[str, str]:
     )
     after_unzip_executable_path = os.path.join(directory, relative_zip_executable_path)
     executable_path = os.path.join(directory, adapt_executable_name(version))
+
+    if not should_download(directory, version):
+        return version, executable_path
 
     os.makedirs(directory, exist_ok=True)
     with open(zip_path, "wb") as chromedriver_fd:

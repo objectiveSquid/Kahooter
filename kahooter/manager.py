@@ -9,6 +9,7 @@ import sys
 import os
 
 from chromedriver_manager import (
+    should_download as should_download_chromedriver,
     get_executable_path as get_chromedriver_path,
     install as install_chromedriver,
 )
@@ -30,10 +31,15 @@ class BotManager:
         self.headless = headless
         self.do_not_optimize = do_not_optimize
 
-        self.logger.info("Downloading chromedriver.")
-        self.chrome_version, self.chromedriver_path = install_chromedriver(
-            ".chromedriver"
-        )
+        try:
+            if not should_download_chromedriver(".chromedriver"):
+                self.logger.info("Downloading chromedriver.")
+            self.chrome_version, self.chromedriver_path = install_chromedriver(
+                ".chromedriver"
+            )
+        except Exception as error:
+            self.logger.critical(f"Failed to download chromedriver: {error}")
+            return
 
         self.generated_usernames: list[str] = []
         self.bots: list[Bot] = []
